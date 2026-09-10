@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=202609110339">
 </head>
 <body>
 <div class="app">
@@ -49,7 +49,7 @@
 
 <script>
 (function () {
-  var base = location.href.replace(/setup\.html.*$/, '') + 'index.html';
+  var base = location.href.replace(/setup\.html.*$/, '') + 'index.html?src=auto';
   document.getElementById('url').textContent = base;
 
   document.getElementById('copy').addEventListener('click', function () {
@@ -71,7 +71,8 @@
       '<li>Scroll the trigger list to <b>App</b> — it sits below the time and alarm ones</li>' +
       '<li>Tap <b>Choose</b>, select <b>Instagram</b>, tick <b>Is Opened</b> and untick <b>Is Closed</b>, then <b>Next</b></li>' +
       '<li>Tap <b>Add Action</b>, search <b>URL</b>, pick <b>Open URLs</b></li>' +
-      '<li>Tap the blue <b>URL</b> placeholder and paste the link above, then <b>Next</b></li>' +
+      '<li>Tap the blue <b>URL</b> placeholder and paste the link above — including the ' +
+      '<b>?src=auto</b> on the end, which is what stops it bouncing you back — then <b>Next</b></li>' +
       '<li>Turn <b>Ask Before Running</b> off and confirm <b>Don’t Ask</b>. Newer iOS calls this <b>Run Immediately</b>.</li>' +
       '<li>Tap <b>Done</b>, then open Instagram to test</li>' +
     '</ol>' +

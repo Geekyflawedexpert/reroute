@@ -21,8 +21,21 @@ var RB = window.RB || {};
       var left = Math.max(1, RB.store.budgetToday() - RB.store.minutesToday());
       RB.store.startSession(current.id, left);
     }
-    location.href = 'instagram://app';
-    setTimeout(function () { location.href = 'https://www.instagram.com/'; }, 700);
+    RB.store.startGrace();          // so the automation doesn't bounce you straight back
+
+    // iOS: try the app first. If it opens, this page is hidden — and the web
+    // fallback MUST be cancelled, or you return later to instagram.com loaded
+    // in the browser, which is just a second feed to scroll.
+    var fired = false;
+    var fallback = setTimeout(function () {
+      if (!fired) location.href = 'https://www.instagram.com/';
+    }, 1500);
+    function cancelFallback() { fired = true; clearTimeout(fallback); }
+    document.addEventListener('visibilitychange', function () { if (document.hidden) cancelFallback(); });
+    window.addEventListener('pagehide', cancelFallback);
+    window.addEventListener('blur', cancelFallback);
+
+    location.href = 'instagram://';
   }
 
   /* ---------------- capture ---------------- */
@@ -711,6 +724,15 @@ var RB = window.RB || {};
     eyebrow = document.getElementById('eyebrow');
     RB.requestPersistence();
     if (!RB.store.intake()) { location.replace('intake.html'); return; }
+
+    // Arrived from the Shortcut, moments after deciding to go through? Let it
+    // pass. Being re-asked 30 seconds after a conscious decision is nagging,
+    // and on iOS versions where the trigger also fires on foregrounding it
+    // would otherwise ping-pong between the two apps forever.
+    if (/[?&]src=auto/.test(location.search) && RB.store.graceLeft() > 0) {
+      location.href = 'instagram://';
+      return;
+    }
     pendingSession = RB.store.reconcileSession();
     capture();
   });

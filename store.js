@@ -160,6 +160,18 @@ RB.store = (function () {
         .reduce(function (a, e) { return a + (e.overrunMins || 0); }, 0);
     },
 
+    /* ---- grace window after a conscious "yes" ---- */
+    GRACE_MIN: 3,
+    startGrace: function () {
+      var c = api.config();
+      c.graceUntil = Date.now() + api.GRACE_MIN * 60000;
+      api.saveConfig(c);
+    },
+    graceLeft: function () {
+      var c = api.config();
+      return c.graceUntil ? Math.max(0, c.graceUntil - Date.now()) : 0;
+    },
+
     lastEventTs: function () {
       var all = api.events();
       return all.length ? all[all.length - 1].ts : null;
