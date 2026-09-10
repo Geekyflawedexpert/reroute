@@ -66,14 +66,17 @@
   var iosSteps =
     '<p class="q">iPhone · Shortcuts</p>' +
     '<ol class="steps">' +
-      '<li>Open <b>Shortcuts</b> → <b>Automation</b> tab → <b>+</b></li>' +
-      '<li>Choose <b>App</b>, pick <b>Instagram</b>, select <b>Is Opened</b></li>' +
-      '<li>Choose <b>Run Immediately</b>, and turn <b>Notify When Run</b> off</li>' +
-      '<li>Add the action <b>Open URLs</b> and paste the link above</li>' +
-      '<li>Tap <b>Done</b>. Open Instagram to test — you should land here.</li>' +
+      '<li>Open <b>Shortcuts</b> → <b>Automation</b> tab (bottom right) → <b>+</b></li>' +
+      '<li>Tap <b>Create Personal Automation</b></li>' +
+      '<li>Scroll the trigger list to <b>App</b> — it sits below the time and alarm ones</li>' +
+      '<li>Tap <b>Choose</b>, select <b>Instagram</b>, tick <b>Is Opened</b> and untick <b>Is Closed</b>, then <b>Next</b></li>' +
+      '<li>Tap <b>Add Action</b>, search <b>URL</b>, pick <b>Open URLs</b></li>' +
+      '<li>Tap the blue <b>URL</b> placeholder and paste the link above, then <b>Next</b></li>' +
+      '<li>Turn <b>Ask Before Running</b> off and confirm <b>Don’t Ask</b>. Newer iOS calls this <b>Run Immediately</b>.</li>' +
+      '<li>Tap <b>Done</b>, then open Instagram to test</li>' +
     '</ol>' +
-    '<p class="hint" style="margin-top:16px">If it asks before running every time, reopen the automation and switch it to ' +
-    'Run Immediately — that setting is what makes it usable.</p>';
+    '<p class="hint" style="margin-top:16px">Step 7 is the one that matters. Left on, you get a confirmation ' +
+    'tap on every single launch, and you will switch the whole thing off within a day.</p>';
 
   var androidSteps =
     '<p class="q">Android</p>' +
