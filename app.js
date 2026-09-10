@@ -561,6 +561,49 @@ var RB = window.RB || {};
       b.scrollIntoView({ block: 'end', behavior: 'smooth' });
     }
 
+    /* Live mode: same bubbles, same tap replies, same endings. Any failure —
+       no worker, offline, timeout, malformed reply — falls through to the
+       scripted tree mid-conversation without the user seeing a break. */
+    var live = !!(RB.store.config().chatWorker || '').trim();
+    var turns = [];
+
+    function typing() {
+      var t = el('div', 'bub them typing', '<span></span><span></span><span></span>');
+      log.appendChild(t);
+      t.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      return t;
+    }
+
+    function liveTurn(userText) {
+      if (userText) turns.push({ role: 'user', content: userText });
+      choices.innerHTML = '';
+      var dots = typing();
+      RB.chatLive(turns, 'ache', new Date().getHours())
+        .then(function (d) {
+          dots.remove();
+          said(d.say, 'them');
+          turns.push({ role: 'assistant', content: d.say });
+          if (d.end) return finish(d.end);
+          d.options.forEach(function (label) {
+            var b = el('button', 'alt', '<span>' + label + '</span>');
+            b.type = 'button';
+            b.addEventListener('click', function () {
+              said(label, 'me');
+              liveTurn(label);
+            });
+            choices.appendChild(b);
+          });
+          if (!d.options.length) finish('rest');
+        })
+        .catch(function () {
+          dots.remove();
+          live = false;                    // silent downgrade, once
+          if (!turns.length) return node('start');
+          said('Let’s keep it simple.', 'them');
+          setTimeout(function () { node('alone'); }, 500);
+        });
+    }
+
     function node(key) {
       var n = RB.CHAT[key];
       if (!n) return;
@@ -615,7 +658,7 @@ var RB = window.RB || {};
       choices.appendChild(bail);
     }
 
-    node('start');
+    if (live) liveTurn(null); else node('start');
   }
 
   function uVoice(u) {
@@ -901,6 +944,23 @@ var RB = window.RB || {};
     testBtn.addEventListener('click', fireLock);
     lockCard.appendChild(testBtn);
     stage.appendChild(lockCard);
+
+    var wkCard = el('div', 'card');
+    wkCard.appendChild(el('p', 'q', 'Chat'));
+    wkCard.appendChild(el('p', 'hint',
+      'Leave this empty and the 3am chat runs from a script — offline, instant, free. ' +
+      'Paste a Cloudflare Worker URL to have Claude write the replies instead. ' +
+      'Falls back to the script whenever the worker is slow or unreachable.'));
+    var wkIn = el('input'); wkIn.type = 'text';
+    wkIn.placeholder = 'https://reroute-chat.<you>.workers.dev';
+    wkIn.value = RB.store.config().chatWorker || '';
+    wkIn.addEventListener('change', function () {
+      var c = RB.store.config(); c.chatWorker = wkIn.value.trim(); RB.store.saveConfig(c); insights();
+    });
+    wkCard.appendChild(wkIn);
+    wkCard.appendChild(el('p', 'hint',
+      (RB.store.config().chatWorker ? 'Live — replies come from Claude.' : 'Scripted — no network needed.')));
+    stage.appendChild(wkCard);
     stage.appendChild(el('div', 'sp'));
     tabs('data');
   }

@@ -26,6 +26,7 @@ RB.store = (function () {
       if (!c.dm)               c.dm = { done: false, people: [], sent: [] };
       if (!c.target)           c.target = 'web';   // 'web' | 'app' — web is the worse feed, on purpose
       if (!c.lock)             c.lock = { shortcut: 'Reroute Lock', auto: false, firedOn: null };
+      if (!('chatWorker' in c)) c.chatWorker = '';   // empty = use the scripted tree
       return c;
     },
 

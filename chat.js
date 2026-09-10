@@ -110,4 +110,32 @@ RB.CHAT_ENDS = {
   flinch:  { label: 'Name what I’m avoiding', kind: 'flinch' }
 };
 
+/* ---- live mode ----
+   When a worker URL is configured the conversation comes from Claude; the
+   scripted tree above stays as the fallback, so the unit still works with no
+   network, no key and no worker. Same output shape either way: {say, options,
+   end}, so the renderer doesn't branch. */
+RB.chatLive = function (turns, lever, hour) {
+  var url = (RB.store.config().chatWorker || '').trim();
+  if (!url) return Promise.reject(new Error('no worker'));
+
+  var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  // A chat that hasn't answered in 8s has already lost to the feed.
+  var timer = ctrl && setTimeout(function () { ctrl.abort(); }, 8000);
+
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: turns, lever: lever, hour: hour }),
+    signal: ctrl ? ctrl.signal : undefined
+  }).then(function (r) {
+    if (timer) clearTimeout(timer);
+    if (!r.ok) throw new Error('worker ' + r.status);
+    return r.json();
+  }).then(function (d) {
+    if (!d || typeof d.say !== 'string' || !d.say) throw new Error('bad reply');
+    return { say: d.say, options: Array.isArray(d.options) ? d.options.slice(0, 3) : [], end: d.end || null };
+  });
+};
+
 window.RB = RB;

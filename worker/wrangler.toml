@@ -1,0 +1,16 @@
+name = "reroute-chat"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Origins allowed to call this worker. Anything else is refused, so the key
+# can't be spent by a random script that found the URL.
+ALLOWED_ORIGINS = "https://geekyflawedexpert.github.io,http://localhost:8000"
+
+# Swap the model here without touching code. Opus 5 is the default;
+# claude-sonnet-5 is cheaper and a little faster if you want that trade.
+MODEL = "claude-opus-5"
+
+# ANTHROPIC_API_KEY is NOT set here — it's a secret:
+#   npx wrangler secret put ANTHROPIC_API_KEY
