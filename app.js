@@ -29,12 +29,25 @@ var RB = window.RB || {};
     stage.innerHTML = '';
     if (pendingSession) {
       var ps = pendingSession; pendingSession = null;
+      var n = RB.store.overruns7d(), body, tail;
+      if (ps.over <= 0) {
+        body = 'You planned ' + ps.planned + ' minutes and took ' + ps.spent + '. It held.';
+        tail = 'That’s the stop working without anything enforcing it.';
+      } else if (n <= 1) {
+        // Stage one: judged. No cushion, no absolution — just the number, said plainly.
+        body = 'You planned ' + ps.planned + ' minutes. You took ' + ps.spent + '.';
+        tail = 'That’s ' + ps.over + ' minutes you didn’t decide to spend. ' +
+               'If it happens again this week the timer stops being a suggestion.';
+      } else {
+        // Stage two: the timer becomes enforced, and yesterday's overrun is charged to today.
+        body = ps.over + ' minutes over, and that’s ' + n + ' times this week.';
+        tail = 'Hard timer is on. Breaks now run to the end before they can be closed, ' +
+               'and today’s overrun comes off tomorrow’s budget.';
+      }
       stage.appendChild(el('div', 'card',
-        '<p class="q">Last break</p><p style="color:var(--ink);margin:0">' +
-        (ps.over > 0
-          ? 'You planned ' + ps.planned + ' minutes and took ' + ps.spent + ' — ' + ps.over + ' over.'
-          : 'You planned ' + ps.planned + ' minutes and took ' + ps.spent + '. It held.') +
-        '</p><p class="hint" style="margin:6px 0 0">Logged, not judged. Overrun is the number that tells you whether a soft stop works for you.</p>'));
+        '<p class="q">Last break</p>' +
+        '<p style="color:var(--ink);margin:0">' + body + '</p>' +
+        '<p class="hint" style="margin:6px 0 0">' + tail + '</p>'));
     }
     stage.appendChild(el('h1', null, 'What’s going on?'));
 
@@ -139,21 +152,44 @@ var RB = window.RB || {};
     shell(u.title, sub);
 
     var over = (used + u.mins) - budget;
+    var debt = RB.store.overrunDebt();
     var line = el('p', 'hint',
       used + ' of ' + budget + ' min used today' +
+      (debt > 0 ? ' (' + debt + ' charged from yesterday)' : '') +
       (over > 0 ? ' · this takes you ' + over + ' min past it' : '') +
-      (RB.store.flexActive() ? ' · flexible day' : ''));
+      (RB.store.flexActive() ? ' · flexible day' : '') +
+      (RB.store.hardMode() ? ' · hard timer on' : ''));
     stage.appendChild(line);
 
     askNotify();
     var go = el('button', 'primary',
       '<span>Start — ' + u.title.toLowerCase() + '</span><span class="why">ends on its own · ~' + u.mins + ' min</span>');
     go.type = 'button';
+    var hard = RB.store.hardMode();
     go.addEventListener('click', function () {
       RB.store.startSession(current.id, u.mins);
-      shell(u.title, 'Running. Put the phone down — come back when it’s finished.');
-      countdown(u.mins * 60, null, 'That’s the ' + u.title.toLowerCase() + ' done.');
-      done('Finished');
+      shell(u.title, hard
+        ? 'Hard timer. This runs to the end — you can’t close it early.'
+        : 'Running. Put the phone down — come back when it’s finished.');
+
+      if (!hard) {
+        countdown(u.mins * 60, null, 'That’s the ' + u.title.toLowerCase() + ' done.');
+        return done('Finished');
+      }
+      var fin = el('button', 'primary', '<span>Finished</span>');
+      fin.type = 'button';
+      fin.disabled = true;
+      fin.style.opacity = '.4';
+      countdown(u.mins * 60, function () {
+        fin.disabled = false; fin.style.opacity = '1';
+      }, 'That’s the ' + u.title.toLowerCase() + ' done.');
+      fin.addEventListener('click', function () { if (!fin.disabled) outcome(); });
+      stage.appendChild(el('div', 'sp'));
+      stage.appendChild(fin);
+      var bail2 = el('button', 'ghost warnish', 'Open it anyway');
+      bail2.type = 'button';
+      bail2.addEventListener('click', openTarget);
+      stage.appendChild(bail2);
     });
     stage.appendChild(go);
 

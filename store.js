@@ -79,7 +79,7 @@ RB.store = (function () {
         base = Math.min(base, 15);
       }
       if (api.flexActive()) base = Math.round(base * 2);   // today's pass, no questions asked
-      return base;
+      return Math.max(0, base - api.overrunDebt());
     },
 
     /* Two passes a week. No justification required — a budget with no give is a
@@ -141,6 +141,22 @@ RB.store = (function () {
       delete cfg.openSession;
       api.saveConfig(cfg);
       return { spent: spent, over: over, planned: s.mins };
+    },
+
+    /* ---- overrun escalation: judged first, hard timer if it keeps happening ---- */
+    overruns7d: function () {
+      var since = Date.now() - 7 * 864e5;
+      return api.events().filter(function (e) { return e.ts >= since && (e.overrunMins || 0) > 2; }).length;
+    },
+    hardMode: function () { return api.overruns7d() >= 2; },
+
+    /* Yesterday's overrun is charged against today. A consequence the app can
+       actually enforce, unlike a stop it has no power to impose. */
+    overrunDebt: function () {
+      var y = new Date(Date.now() - 864e5).toDateString();
+      return api.events()
+        .filter(function (e) { return new Date(e.ts).toDateString() === y; })
+        .reduce(function (a, e) { return a + (e.overrunMins || 0); }, 0);
     },
 
     lastEventTs: function () {
