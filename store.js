@@ -24,6 +24,7 @@ RB.store = (function () {
       if (!c.goal)             c.goal = { mode: 'unsure', dailyMinutes: 30 };
       if (!c.flex)             c.flex = { weekStart: null, used: 0 };
       if (!c.dm)               c.dm = { done: false, people: [], sent: [] };
+      if (!c.target)           c.target = 'web';   // 'web' | 'app' — web is the worse feed, on purpose
       return c;
     },
 

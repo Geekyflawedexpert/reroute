@@ -22,10 +22,18 @@ var RB = window.RB || {};
       RB.store.startSession(current.id, left);
     }
     RB.store.startGrace();          // so the automation doesn't bounce you straight back
+    goToInstagram();
+  }
 
-    // iOS: try the app first. If it opens, this page is hidden — and the web
-    // fallback MUST be cancelled, or you return later to instagram.com loaded
-    // in the browser, which is just a second feed to scroll.
+  /* Web by default: mobile instagram.com is a markedly worse feed than the app,
+     and it avoids the "Open in Instagram?" switch prompt entirely. The app path
+     cancels its web fallback the moment we're backgrounded — otherwise
+     instagram.com loads silently behind the app and greets you next visit. */
+  function goToInstagram() {
+    if (RB.store.config().target === 'web') {
+      location.href = 'https://www.instagram.com/';
+      return;
+    }
     var fired = false;
     var fallback = setTimeout(function () {
       if (!fired) location.href = 'https://www.instagram.com/';
@@ -34,7 +42,6 @@ var RB = window.RB || {};
     document.addEventListener('visibilitychange', function () { if (document.hidden) cancelFallback(); });
     window.addEventListener('pagehide', cancelFallback);
     window.addEventListener('blur', cancelFallback);
-
     location.href = 'instagram://';
   }
 
@@ -650,6 +657,23 @@ var RB = window.RB || {};
     var setupLink = el('a', 'ghost', 'Wire it to Instagram');
     setupLink.href = 'setup.html';
     stage.appendChild(setupLink);
+
+    var tgt = RB.store.config().target;
+    var toggle = el('button', 'alt',
+      '<span class="row-item"><span class="t">Open Instagram in ' +
+        (tgt === 'web' ? 'Safari' : 'the app') + '</span>' +
+      '<span class="d">' + (tgt === 'web'
+        ? 'The mobile site is a worse feed than the app. Tap to switch to the app.'
+        : 'The app is the easier feed. Tap to switch to the browser.') + '</span></span>' +
+      '<span class="p">' + (tgt === 'web' ? 'safari' : 'app') + '</span>');
+    toggle.type = 'button';
+    toggle.addEventListener('click', function () {
+      var c = RB.store.config();
+      c.target = c.target === 'web' ? 'app' : 'web';
+      RB.store.saveConfig(c);
+      insights();
+    });
+    stage.appendChild(toggle);
     stage.appendChild(el('div', 'sp'));
     tabs('data');
   }
@@ -730,7 +754,7 @@ var RB = window.RB || {};
     // and on iOS versions where the trigger also fires on foregrounding it
     // would otherwise ping-pong between the two apps forever.
     if (/[?&]src=auto/.test(location.search) && RB.store.graceLeft() > 0) {
-      location.href = 'instagram://';
+      goToInstagram();
       return;
     }
     pendingSession = RB.store.reconcileSession();
