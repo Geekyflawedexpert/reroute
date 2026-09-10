@@ -187,6 +187,32 @@ var RB = window.RB || {};
     return { ok: score >= 3, score: score, why: why };
   }
 
+  /* Grace passthrough. Never a blank screen: say what is happening, leave a way
+     out, and only then hand over. Instagram claims instagram.com as a universal
+     link, so iOS may still offer to open the app — that prompt is Safari's. */
+  function passingThrough() {
+    var secs = Math.ceil(RB.store.graceLeft() / 1000);
+    eyebrow.innerHTML = 'Reroute · <b>letting you through</b>';
+    stage.innerHTML = '';
+    stage.appendChild(el('h1', null, 'You already <span class="hl">said yes</span>'));
+    stage.appendChild(el('p', 'lead',
+      'Not asking again for another ' + Math.ceil(secs / 60) + ' minute' + (secs > 60 ? 's' : '') + '.'));
+    stage.appendChild(el('p', 'hint',
+      'If Safari offers to open the Instagram app, tap Cancel — the mobile site is the point.'));
+
+    var stop = el('button', 'alt', '<span>Actually, stop me</span><span class="p">changed my mind</span>');
+    stop.type = 'button';
+    stop.addEventListener('click', function () {
+      var c = RB.store.config(); c.graceUntil = 0; RB.store.saveConfig(c);
+      clearTimeout(hop);
+      pendingSession = RB.store.reconcileSession();
+      capture();
+    });
+    stage.appendChild(stop);
+
+    var hop = setTimeout(goToInstagram, 1200);
+  }
+
   /* Runs a Shortcut by name. This is the only lever a web page has on the OS:
      it can't set a Screen Time limit, but the Shortcut it starts can set a
      Focus whose Home Screen simply doesn't contain Instagram. */
@@ -880,7 +906,7 @@ var RB = window.RB || {};
     // and on iOS versions where the trigger also fires on foregrounding it
     // would otherwise ping-pong between the two apps forever.
     if (/[?&]src=auto/.test(location.search) && RB.store.graceLeft() > 0) {
-      goToInstagram();
+      passingThrough();
       return;
     }
     pendingSession = RB.store.reconcileSession();
