@@ -45,7 +45,7 @@
       b.addEventListener('click', function () {
         answers[qi] = i;
         qi++;
-        qi < RB.QUESTIONS.length ? renderQuestion() : renderResult();
+        qi < RB.QUESTIONS.length ? renderQuestion() : renderGoal();
       });
       wrap.appendChild(b);
     });
@@ -56,6 +56,48 @@
       back.addEventListener('click', function () { qi--; renderQuestion(); });
       stage.appendChild(back);
     }
+  }
+
+  function renderGoal() {
+    prog.textContent = 'last one';
+    stage.innerHTML = '';
+    stage.appendChild(el('h1', null, 'Where do you want to end up?'));
+    stage.appendChild(el('p', null,
+      'This sets your daily budget. It’s a target, not a wall — you can always go past it, ' +
+      'and you get two flexible days a week with no questions asked.'));
+
+    var wrap = el('div', 'stack');
+    RB.GOALS.forEach(function (g) {
+      var b = el('button', 'alt',
+        '<span><strong style="color:var(--ink)">' + g.label + '</strong><br>' +
+        '<span class="hint">' + g.sub + '</span></span>');
+      b.type = 'button';
+      b.addEventListener('click', function () { g.asksMinutes ? askMinutes(g) : commitGoal(g, g.mins); });
+      wrap.appendChild(b);
+    });
+    stage.appendChild(wrap);
+  }
+
+  function askMinutes(g) {
+    stage.innerHTML = '';
+    stage.appendChild(el('h1', null, 'How many minutes a day?'));
+    stage.appendChild(el('p', null,
+      'Pick something you’d actually hit. A number you miss every day teaches you the system doesn’t work.'));
+    var wrap = el('div', 'stack');
+    [15, 30, 45, 60].forEach(function (m) {
+      var b = el('button', 'alt', '<span>' + m + ' minutes</span>');
+      b.type = 'button';
+      b.addEventListener('click', function () { commitGoal(g, m); });
+      wrap.appendChild(b);
+    });
+    stage.appendChild(wrap);
+  }
+
+  function commitGoal(g, mins) {
+    var cfg = RB.store.config();
+    cfg.goal = { mode: g.mode, dailyMinutes: mins };
+    RB.store.saveConfig(cfg);
+    renderResult();
   }
 
   function renderResult() {
@@ -86,9 +128,14 @@
     u.appendChild(list);
     stage.appendChild(u);
 
+    var g = RB.store.config().goal;
+    var gLabel = (RB.GOALS.filter(function (x) { return x.mode === g.mode; })[0] || {}).label || '';
     stage.appendChild(el('p', null,
       'Week one changes nothing else. Nothing gets blocked, nothing gets deleted, and every open is still allowed. ' +
       'You’ll get a number on day one and your own pattern by day three.'));
+    stage.appendChild(el('p', 'hint',
+      'Goal: ' + gLabel.toLowerCase() + ' · starting budget ' + RB.store.budgetToday() + ' min/day · ' +
+      'two flexible days a week.'));
 
     var go = el('button', 'primary',
       '<span>Start day 1</span><span class="why">21 days · nothing blocked this week</span>');

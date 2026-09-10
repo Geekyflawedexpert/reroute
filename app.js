@@ -3,7 +3,7 @@
 var RB = window.RB || {};
 
 (function () {
-  var stage, eyebrow, current = null, timerHandle = null, visHandler = null;
+  var stage, eyebrow, current = null, timerHandle = null, visHandler = null, pendingSession = null;
 
   function el(t, c, h) { var n = document.createElement(t); if (c) n.className = c; if (h != null) n.innerHTML = h; return n; }
   function clearTimer() {
@@ -27,6 +27,15 @@ var RB = window.RB || {};
 
     eyebrow.innerHTML = 'Reroute · <b>' + (day ? 'day ' + day + ' of 21' : 'not started') + '</b>';
     stage.innerHTML = '';
+    if (pendingSession) {
+      var ps = pendingSession; pendingSession = null;
+      stage.appendChild(el('div', 'card',
+        '<p class="q">Last break</p><p style="color:var(--ink);margin:0">' +
+        (ps.over > 0
+          ? 'You planned ' + ps.planned + ' minutes and took ' + ps.spent + ' — ' + ps.over + ' over.'
+          : 'You planned ' + ps.planned + ' minutes and took ' + ps.spent + '. It held.') +
+        '</p><p class="hint" style="margin:6px 0 0">Logged, not judged. Overrun is the number that tells you whether a soft stop works for you.</p>'));
+    }
     stage.appendChild(el('h1', null, 'What’s going on?'));
 
     var top = pred.ranked[0], L = RB.lever(top.id);
@@ -75,15 +84,33 @@ var RB = window.RB || {};
   }
 
   function choose(leverId, predictedId, ctx, pred) {
+    // Corroborate BEFORE logging, or this break counts itself and the first
+    // Payout of the day can never qualify.
+    var corr = leverId === 'payout' ? corroborate(ctx) : null;
+
     current = RB.store.add({
       ts: Date.now(), hour: ctx.hour, dow: ctx.dow, ctx: ctx,
       predicted: predictedId, lever: leverId, corrected: leverId !== predictedId,
-      confidence: pred.ranked[0].p, leaning: pred.leaning, outcome: null
+      confidence: pred.ranked[0].p, leaning: pred.leaning, outcome: null,
+      corroborated: corr ? corr.ok : undefined, corrScore: corr ? corr.score : undefined
     });
-    var bank = RB.UNITS[leverId] || [];
+    var bank = corr ? RB.payoutUnits(corr.ok) : (RB.UNITS[leverId] || []);
     var unit = bank[Math.floor(Math.random() * bank.length)];   // the draw: not shown in advance
     RB.store.update(current.id, { unit: unit.id, unitType: unit.type });
-    dispense(leverId, unit);
+    dispense(leverId, unit, corr);
+  }
+
+  /* Payout claims "I've earned this". The app can't refuse that — refusing an
+     earned break produces a binge — but it can check it against what it already
+     knows, and hand back a shorter object when the claim doesn't hold up.
+     Evidence, not currency: there is nothing here to farm. */
+  function corroborate(ctx) {
+    var score = 0, why = [];
+    if (RB.store.payoutsToday() === 0)          { score += 2; } else { why.push('this is break ' + (RB.store.payoutsToday() + 1) + ' today'); }
+    if (ctx.minsSinceLast == null || ctx.minsSinceLast > 90) { score += 1; } else if (ctx.minsSinceLast < 20) { why.push('you were here ' + ctx.minsSinceLast + ' minutes ago'); }
+    if (ctx.hour >= 17)                          { score += 1; }
+    if (RB.store.reroutesToday() >= 2)           { score += 1; }
+    return { ok: score >= 3, score: score, why: why };
   }
 
   /* ---------------- units ---------------- */
@@ -96,11 +123,52 @@ var RB = window.RB || {};
     return stage;
   }
 
-  function dispense(leverId, u) {
+  function dispense(leverId, u, corr) {
     eyebrow.innerHTML = 'Reroute · <b>one ' + (u.type === 'step' ? 'step' : 'thing') + ', then it ends</b>';
-    ({ wiki: uWiki, drill: uDrill, breath: uBreath, timebox: uTimebox,
+    ({ wiki: uWiki, drill: uDrill, breath: uBreath, timebox: uTimebox, artifact: uArtifact,
        move: uMove, text: uText, step: uStep, voice: uVoice, list: uList
-     }[u.type] || uText)(u, leverId);
+     }[u.type] || uText)(u, leverId, corr);
+  }
+
+  /* A bounded object, not a duration. The thing ends by itself; the timer is
+     only there so the overrun is measurable afterwards. */
+  function uArtifact(u, leverId, corr) {
+    var used = RB.store.minutesToday(), budget = RB.store.budgetToday();
+    var sub = u.note || '';
+    if (corr && !corr.ok && corr.why.length) sub = corr.why[0].charAt(0).toUpperCase() + corr.why[0].slice(1) + '. ' + sub;
+    shell(u.title, sub);
+
+    var over = (used + u.mins) - budget;
+    var line = el('p', 'hint',
+      used + ' of ' + budget + ' min used today' +
+      (over > 0 ? ' · this takes you ' + over + ' min past it' : '') +
+      (RB.store.flexActive() ? ' · flexible day' : ''));
+    stage.appendChild(line);
+
+    askNotify();
+    var go = el('button', 'primary',
+      '<span>Start — ' + u.title.toLowerCase() + '</span><span class="why">ends on its own · ~' + u.mins + ' min</span>');
+    go.type = 'button';
+    go.addEventListener('click', function () {
+      RB.store.startSession(current.id, u.mins);
+      shell(u.title, 'Running. Put the phone down — come back when it’s finished.');
+      countdown(u.mins * 60, null, 'That’s the ' + u.title.toLowerCase() + ' done.');
+      done('Finished');
+    });
+    stage.appendChild(go);
+
+    if (over > 0 && RB.store.flexLeft() > 0 && !RB.store.flexActive()) {
+      var flex = el('button', 'ghost',
+        'Use a flexible day (' + RB.store.flexLeft() + ' left this week)');
+      flex.type = 'button';
+      flex.addEventListener('click', function () { RB.store.useFlex(); uArtifact(u, leverId, corr); });
+      stage.appendChild(flex);
+    }
+
+    var bail = el('button', 'ghost warnish', 'Open it anyway');
+    bail.type = 'button';
+    bail.addEventListener('click', openTarget);
+    stage.appendChild(bail);
   }
 
   function done(label) {
@@ -480,6 +548,7 @@ var RB = window.RB || {};
     eyebrow = document.getElementById('eyebrow');
     RB.requestPersistence();
     if (!RB.store.intake()) { location.replace('intake.html'); return; }
+    pendingSession = RB.store.reconcileSession();
     capture();
   });
 })();

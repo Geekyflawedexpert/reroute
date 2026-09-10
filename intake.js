@@ -65,6 +65,19 @@ RB.READS = {
   payout:'Your opens are a reward you’ve decided you’re owed — and you’re usually right. Denying an earned break produces a binge. The design isn’t refusal, it’s a hard stop.'
 };
 
+/* Asked after the eight scoring questions. This is the destination, not a lever —
+   it sets the daily budget and it is where the eliminate/limit fork lives. */
+RB.GOALS = [
+  { mode:'eliminate', label:'Off it completely',
+    sub:'The budget tapers to nothing by day 21.', mins:20 },
+  { mode:'limit', label:'A set amount each day',
+    sub:'You pick the number. It stays put.', mins:30, asksMinutes:true },
+  { mode:'dms', label:'Messages only, no feed',
+    sub:'Browser, one short window a day.', mins:15 },
+  { mode:'unsure', label:'Not sure yet',
+    sub:'Start at 30 minutes. Decide by day 14, on real data.', mins:30 }
+];
+
 RB.score = function (answers) {
   var w = {}; RB.LEVERS.forEach(function (l) { w[l.id] = 0; });
   answers.forEach(function (ai, qi) {

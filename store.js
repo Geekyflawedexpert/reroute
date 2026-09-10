@@ -16,7 +16,15 @@ RB.store = (function () {
   var api = {
     events:  function () { return read(K.ev, []); },
     intake:  function () { return read(K.intake, null); },
-    config:  function () { return read(K.cfg, { start: null, contacts: [], curiosity: [] }); },
+    config:  function () {
+      var c = read(K.cfg, null) || {};
+      if (!('start'     in c)) c.start = null;
+      if (!('contacts'  in c)) c.contacts = [];
+      if (!('curiosity' in c)) c.curiosity = [];
+      if (!c.goal)             c.goal = { mode: 'unsure', dailyMinutes: 30 };
+      if (!c.flex)             c.flex = { weekStart: null, used: 0 };
+      return c;
+    },
 
     saveIntake: function (v) { write(K.intake, v); },
     saveConfig: function (v) { write(K.cfg, v); },
@@ -58,6 +66,81 @@ RB.store = (function () {
       var d = api.day();
       if (d == null) return 0;
       return d <= 7 ? 1 : d <= 14 ? 2 : d <= 21 ? 3 : 4;
+    },
+
+    /* ---- the daily budget, derived from the goal the user actually stated ---- */
+    budgetToday: function () {
+      var cfg = api.config(), g = cfg.goal, d = api.day() || 1;
+      var base = Math.max(0, g.dailyMinutes || 0);
+      if (g.mode === 'eliminate') {
+        // taper across the three phases rather than a cliff on day 15
+        base = d <= 7 ? base : d <= 14 ? Math.round(base * 0.5) : d <= 21 ? Math.round(base * 0.15) : 0;
+      } else if (g.mode === 'dms') {
+        base = Math.min(base, 15);
+      }
+      if (api.flexActive()) base = Math.round(base * 2);   // today's pass, no questions asked
+      return base;
+    },
+
+    /* Two passes a week. No justification required — a budget with no give is a
+       budget you fail daily, and failing daily teaches you the system is wrong. */
+    FLEX_PER_WEEK: 2,
+    flexWeekReset: function () {
+      var cfg = api.config(), now = Date.now();
+      if (!cfg.flex.weekStart || now - cfg.flex.weekStart > 7 * 864e5) {
+        cfg.flex = { weekStart: now, used: 0, activeOn: null };
+        api.saveConfig(cfg);
+      }
+      return cfg;
+    },
+    flexLeft: function () {
+      var cfg = api.flexWeekReset();
+      return Math.max(0, api.FLEX_PER_WEEK - (cfg.flex.used || 0));
+    },
+    flexActive: function () {
+      var cfg = api.flexWeekReset();
+      return cfg.flex.activeOn === new Date().toDateString();
+    },
+    useFlex: function () {
+      var cfg = api.flexWeekReset();
+      if (api.flexLeft() <= 0) return false;
+      cfg.flex.used = (cfg.flex.used || 0) + 1;
+      cfg.flex.activeOn = new Date().toDateString();
+      api.saveConfig(cfg);
+      return true;
+    },
+
+    todays: function () {
+      var t = new Date().toDateString();
+      return api.events().filter(function (e) { return new Date(e.ts).toDateString() === t; });
+    },
+    payoutsToday: function () {
+      return api.todays().filter(function (e) { return e.lever === 'payout'; }).length;
+    },
+    minutesToday: function () {
+      return api.todays().reduce(function (a, e) { return a + (e.spentMins || 0); }, 0);
+    },
+    reroutesToday: function () {
+      return api.todays().filter(function (e) { return e.outcome === 'rerouted'; }).length;
+    },
+
+    /* ---- an open session survives the page dying, so overrun is measurable
+            even though the web can't fire a notification to interrupt it ---- */
+    openSession: function () { return api.config().openSession || null; },
+    startSession: function (eventId, mins) {
+      var cfg = api.config();
+      cfg.openSession = { eventId: eventId, startedAt: Date.now(), endAt: Date.now() + mins * 60000, mins: mins };
+      api.saveConfig(cfg);
+    },
+    reconcileSession: function () {
+      var cfg = api.config(), s = cfg.openSession;
+      if (!s) return null;
+      var spent = Math.round((Date.now() - s.startedAt) / 60000);
+      var over  = Math.max(0, Math.round((Date.now() - s.endAt) / 60000));
+      api.update(s.eventId, { spentMins: spent, overrunMins: over });
+      delete cfg.openSession;
+      api.saveConfig(cfg);
+      return { spent: spent, over: over, planned: s.mins };
     },
 
     lastEventTs: function () {

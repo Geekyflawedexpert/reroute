@@ -43,9 +43,24 @@ RB.UNITS = {
   ache: [
     { id:'voice',     type:'voice',  title:'Send one voice note' }
   ],
+  /* Payout dispenses a bounded OBJECT, not a duration. "One episode" ends by
+     itself; twenty minutes of a feed never does. Structure beats a notification
+     arriving at the exact moment attention is lowest. */
   payout: [
-    { id:'reward',    type:'timebox',title:'Take it — with a stop',  mins:20, note:'You earned this. The timer is the whole point.' }
+    { id:'episode', type:'artifact', title:'One episode',        mins:26, tier:'full', note:'Pick it before you press play. It ends when it ends.' },
+    { id:'side',    type:'artifact', title:'One album side',     mins:20, tier:'full', note:'Side A. Then it’s over on its own.' },
+    { id:'outside', type:'artifact', title:'Twenty minutes outside', mins:20, tier:'full', note:'Take the break, just not through a screen.' },
+    { id:'rush',    type:'artifact', title:'One Puzzle Rush run',mins:5,  tier:'short',note:'Three minutes, and it stops itself.' },
+    { id:'onesong', type:'artifact', title:'One song',           mins:4,  tier:'short',note:'Loud. Then back.' }
   ]
+};
+
+/* Payout is the only lever whose unit depends on whether the claim holds up.
+   Never refused — refusing an earned break is how you produce a binge — but
+   never free either, or it becomes the cheap item on the menu. */
+RB.payoutUnits = function (corroborated) {
+  var tier = corroborated ? 'full' : 'short';
+  return RB.UNITS.payout.filter(function (u) { return u.tier === tier; });
 };
 
 /* Drill bank for the Void. Mental math is generated; the rest are state-definition
