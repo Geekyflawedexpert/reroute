@@ -12,13 +12,13 @@ var RB = window.RB || {};
   }
   function mmss(s) { return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 
-  function openTarget() {
+  function openTarget(committed) {
     if (current) {
       RB.store.update(current.id, { outcome: 'opened', endedAt: Date.now() });
       // Start a tracked session so the time actually spent in Instagram counts
       // against today's budget. The automation firing again is what closes it:
       // the next time Reroute loads, reconcileSession() measures the gap.
-      var left = Math.max(1, RB.store.budgetToday() - RB.store.minutesToday());
+      var left = committed || Math.max(1, RB.store.budgetToday() - RB.store.minutesToday());
       RB.store.startSession(current.id, left);
     }
     RB.store.startGrace();          // so the automation doesn't bounce you straight back
@@ -148,11 +148,7 @@ var RB = window.RB || {};
     var skip = el('button', 'ghost warnish',
       outOfBudget ? 'Open it anyway — you’re at ' + spent + ' of ' + budg : 'Just open it');
     skip.type = 'button';
-    skip.addEventListener('click', function () {
-      current = RB.store.add({ ts: Date.now(), hour: ctx.hour, dow: ctx.dow, ctx: ctx,
-        predicted: top.id, lever: null, outcome: 'opened', endedAt: Date.now() });
-      openTarget();
-    });
+    skip.addEventListener('click', function () { handoff(ctx, top.id); });
     stage.appendChild(skip);
     tabs('log');
   }
@@ -185,6 +181,77 @@ var RB = window.RB || {};
     if (ctx.hour >= 17)                          { score += 1; }
     if (RB.store.reroutesToday() >= 2)           { score += 1; }
     return { ok: score >= 3, score: score, why: why };
+  }
+
+  /* ---- the handoff ----
+     Going through is a decision with a stated length, made before you leave,
+     not a door you drift out of. Reroute can hold you to the next session;
+     only Screen Time can end the one you're in. */
+  function handoff(ctx, predictedId) {
+    clearTimer();
+    var budg = RB.store.budgetToday(), spent = RB.store.minutesToday();
+    var left = budg - spent;
+    eyebrow.innerHTML = 'Reroute · <b>going through</b>';
+    stage.innerHTML = '';
+
+    if (budg > 0 && left <= 0) {
+      // Reroute's own hard lock: it will not hand you a session it can't fund.
+      stage.appendChild(el('h1', null, 'You’re <span class="hl">out for today</span>'));
+      stage.appendChild(el('p', 'lead',
+        spent + ' of ' + budg + ' minutes used. The next one is tomorrow.'));
+
+      if (RB.store.flexLeft() > 0) {
+        var flex = el('button', 'alt',
+          '<span class="row-item"><span class="t">Use a flexible day</span>' +
+          '<span class="d">' + RB.store.flexLeft() + ' left this week. Doubles today’s budget, no reason needed.</span></span>');
+        flex.type = 'button';
+        flex.addEventListener('click', function () { RB.store.useFlex(); handoff(ctx, predictedId); });
+        stage.appendChild(flex);
+      } else {
+        stage.appendChild(el('p', 'hint',
+          'No flexible days left this week either. They come back on ' +
+          new Date(RB.store.config().flex.weekStart + 7 * 864e5).toLocaleDateString(undefined, { weekday: 'long' }) + '.'));
+      }
+
+      stage.appendChild(el('p', 'hint',
+        'Reroute can refuse the next session. It cannot end one you’re already in, and it ' +
+        'cannot stop you typing the address yourself — that’s what the Screen Time website ' +
+        'limit is for. This is a commitment, not a wall.'));
+
+      stage.appendChild(el('div', 'sp'));
+      var back = el('button', 'primary', '<span>Fine, back</span>');
+      back.type = 'button';
+      back.addEventListener('click', capture);
+      stage.appendChild(back);
+      return;
+    }
+
+    var mins = budg > 0 ? left : 20;
+    stage.appendChild(el('h1', null, '<span class="hl">' + mins + ' minutes</span> starting now'));
+    stage.appendChild(el('p', 'lead',
+      budg > 0
+        ? 'That’s what’s left of your ' + budg + ' today. The clock starts when you tap.'
+        : 'No limit set, so this is a 20-minute session by default.'));
+    stage.appendChild(el('p', 'hint',
+      'Opening in Safari, not the app — the mobile site is the worse feed, which is the point. ' +
+      'Go over and it comes off tomorrow.'));
+
+    var go = el('button', 'primary',
+      '<span>Open Instagram</span><span class="why">' + mins + ' min · counted either way</span>');
+    go.type = 'button';
+    go.addEventListener('click', function () {
+      current = RB.store.add({ ts: Date.now(), hour: ctx.hour, dow: ctx.dow, ctx: ctx,
+        predicted: predictedId, lever: null, outcome: 'opened', endedAt: Date.now(),
+        committedMins: mins });
+      openTarget(mins);
+    });
+    stage.appendChild(el('div', 'sp'));
+    stage.appendChild(go);
+
+    var no = el('button', 'ghost', 'Actually, no');
+    no.type = 'button';
+    no.addEventListener('click', capture);
+    stage.appendChild(no);
   }
 
   /* ---------------- units ---------------- */
