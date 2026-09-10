@@ -23,6 +23,7 @@ RB.store = (function () {
       if (!('curiosity' in c)) c.curiosity = [];
       if (!c.goal)             c.goal = { mode: 'unsure', dailyMinutes: 30 };
       if (!c.flex)             c.flex = { weekStart: null, used: 0 };
+      if (!c.dm)               c.dm = { done: false, people: [], sent: [] };
       return c;
     },
 

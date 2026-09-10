@@ -83,4 +83,49 @@ RB.drill = function () {
   return { q: 'Define the state: ' + p[0], a: p[1] };
 };
 
+
+/* ---- Wikipedia screening ----
+   Random articles surface disasters, disease and violence at a decent clip.
+   Serving that to someone who just tagged "wired, can't settle" is a real harm,
+   not a rough edge — so screen the summary and re-draw. */
+RB.WIKI_BLOCK = new RegExp([
+  'murder','homicide','massacre','genocide','assassin','manslaughter',
+  'suicide','self-harm','overdose','famine','starvation',
+  'rape','abuse','assault','trafficking','abduct','kidnap','torture',
+  'war','battle','invasion','bombing','terroris','insurgen','militia','execution',
+  'earthquake','tsunami','hurricane','cyclone','wildfire','landslide','famine',
+  'crash','derailment','shipwreck','sinking','disaster','catastroph',
+  'epidemic','pandemic','outbreak','cancer','tumou?r','disease','syndrome','virus',
+  'died','death','fatal','casualt','killed','victim','shooting','massacr',
+  'cemeter','funeral','obituar'
+].join('|'), 'i');
+
+/* Used when the network is down or every draw gets screened out. */
+RB.WIKI_FALLBACK = [
+  { title:'The Antikythera mechanism', extract:'A geared bronze device recovered from a Roman-era shipwreck in 1901, built around the second century BC to predict the positions of the sun, moon and planets. Nothing of comparable mechanical complexity is known for the next thousand years.' },
+  { title:'Tardigrades', extract:'Half-millimetre animals that survive being frozen to near absolute zero, heated past boiling, dried out for decades and exposed to the vacuum of space. They do it by expelling almost all their water and folding into a glassy, suspended state called a tun.' },
+  { title:'The Voynich manuscript', extract:'A 15th-century codex written in an unknown script, illustrated with plants that match nothing growing anywhere. Every serious attempt at decipherment has failed, and it is still unsettled whether it encodes a language at all.' },
+  { title:'Ambergris', extract:'A waxy substance formed in the gut of sperm whales, found washed up on beaches. Fresh, it smells appalling; aged by years of sun and salt water it becomes sweet and marine, and was one of the most valuable materials in perfumery.' },
+  { title:'The Great Stink', extract:'In the summer of 1858 the Thames grew so foul that Parliament soaked its curtains in chloride of lime and considered relocating. The result was Joseph Bazalgette\u2019s sewer network, much of which London still runs on.' },
+  { title:'Kowloon Walled City', extract:'An ungoverned enclave in Hong Kong where roughly 33,000 people lived on 2.6 hectares, in a single interlocked mass of self-built towers. Residents navigated it by rooftop, and postmen learned it by memory.' }
+];
+
+RB.fetchArticle = function (tries) {
+  tries = tries == null ? 6 : tries;
+  if (tries <= 0) return Promise.resolve(RB.randomFallback());
+  return fetch('https://en.wikipedia.org/api/rest_v1/page/random/summary')
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      var text = ((d && d.title) || '') + ' ' + ((d && d.extract) || '');
+      var tooThin = !d || !d.extract || d.extract.length < 180;   // stubs and disambiguation pages
+      if (tooThin || RB.WIKI_BLOCK.test(text)) return RB.fetchArticle(tries - 1);
+      return { title: d.title, extract: d.extract };
+    })
+    .catch(function () { return RB.randomFallback(); });
+};
+
+RB.randomFallback = function () {
+  return RB.WIKI_FALLBACK[Math.floor(Math.random() * RB.WIKI_FALLBACK.length)];
+};
+
 window.RB = RB;

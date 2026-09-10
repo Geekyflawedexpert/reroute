@@ -49,6 +49,19 @@ var RB = window.RB || {};
         '<p style="color:var(--ink);margin:0">' + body + '</p>' +
         '<p class="hint" style="margin:6px 0 0">' + tail + '</p>'));
     }
+    var cfgDM = RB.store.config().dm, dayNow = RB.store.day();
+    if (dayNow != null && dayNow >= 13 && !cfgDM.done) {
+      var nudge = el('div', 'card');
+      nudge.appendChild(el('p', 'q', 'Day 13 · before you delete it'));
+      nudge.appendChild(el('p', null,
+        'Instagram DMs can’t be exported or forwarded — so the messages don’t move, the people do. ' +
+        'It’s usually three to eight who actually message you.'));
+      var openDM = el('button', 'alt', '<span>Sort out my messages</span>');
+      openDM.type = 'button';
+      openDM.addEventListener('click', dmStep);
+      nudge.appendChild(openDM);
+      stage.appendChild(nudge);
+    }
     stage.appendChild(el('h1', null, 'What’s going on?'));
 
     var top = pred.ranked[0], L = RB.lever(top.id);
@@ -260,18 +273,12 @@ var RB = window.RB || {};
 
   function uWiki(u) {
     shell(u.title, 'Read it or don’t. Either way it’s one article.');
-    var box = el('div', 'card', '<p class="hint">loading…</p>');
+    var box = el('div', 'card', '<p class="hint">finding one…</p>');
     stage.appendChild(box);
-    fetch('https://en.wikipedia.org/api/rest_v1/page/random/summary')
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        box.innerHTML = '<h2>' + d.title + '</h2><p style="color:var(--ink)">' +
-          (d.extract || '') + '</p>';
-      })
-      .catch(function () {
-        box.innerHTML = '<p class="hint">No connection. Look out of the window for thirty seconds instead — ' +
-          'that also counts.</p>';
-      });
+    // screened: re-draws past disasters, disease and violence before showing anything
+    RB.fetchArticle().then(function (d) {
+      box.innerHTML = '<h2>' + d.title + '</h2><p style="color:var(--ink)">' + d.extract + '</p>';
+    });
     done('Finished');
   }
 
@@ -453,6 +460,88 @@ var RB = window.RB || {};
     stage.appendChild(sk);
   }
 
+  /* ---- day 13: move the people, not the messages ----
+     The names collected here become the Ache lever's contact bank, so L6 stops
+     asking anyone to invent a name at 11pm mid-craving. */
+  function dmStep() {
+    clearTimer();
+    var cfg = RB.store.config();
+    eyebrow.innerHTML = 'Reroute · <b>day 13 · messages</b>';
+    stage.innerHTML = '';
+    stage.appendChild(el('h1', null, 'Who actually messages you there?'));
+    stage.appendChild(el('p', null,
+      'Not followers — the people whose messages you’d genuinely miss. Three to eight names.'));
+
+    var list = el('div', 'stack');
+    function paint() {
+      list.innerHTML = '';
+      cfg.dm.people.forEach(function (name) {
+        var sent = cfg.dm.sent.indexOf(name) > -1;
+        var b = el('button', 'alt',
+          '<span>' + (sent ? '✓ ' : '') + name + '</span>' +
+          '<span class="p">' + (sent ? 'told' : 'tap when told') + '</span>');
+        b.type = 'button';
+        b.addEventListener('click', function () {
+          if (sent) cfg.dm.sent.splice(cfg.dm.sent.indexOf(name), 1);
+          else cfg.dm.sent.push(name);
+          RB.store.saveConfig(cfg); paint();
+        });
+        list.appendChild(b);
+      });
+    }
+    paint();
+    stage.appendChild(list);
+
+    if (cfg.dm.people.length < 8) {
+      var inp = el('input'); inp.type = 'text'; inp.placeholder = 'Add a name';
+      inp.addEventListener('change', function () {
+        var v = inp.value.trim();
+        if (v && cfg.dm.people.indexOf(v) === -1) {
+          cfg.dm.people.push(v); RB.store.saveConfig(cfg);
+          dmStep();   // full re-render: the message card and Done button are gated on people.length
+        }
+      });
+      stage.appendChild(inp);
+    }
+
+    if (cfg.dm.people.length) {
+      var msg = 'Coming off Instagram for a bit — I won’t see DMs there. ' +
+                'WhatsApp is the best way to reach me.';
+      var c = el('div', 'card');
+      c.appendChild(el('p', 'q', 'Send them this'));
+      c.appendChild(el('p', null, '“' + msg + '”'));
+      c.appendChild(el('p', 'hint',
+        'Send it directly, not as a Story — posting a Story is re-entry. ' +
+        'Switching to a Creator account also lets you set an auto-reply, which covers everyone else.'));
+      var copy = el('button', 'alt', '<span>Copy the message</span>');
+      copy.type = 'button';
+      copy.addEventListener('click', function () {
+        if (navigator.clipboard) navigator.clipboard.writeText(msg).catch(function () {});
+        copy.innerHTML = '<span>Copied</span>';
+      });
+      c.appendChild(copy);
+      stage.appendChild(c);
+
+      var fin = el('button', 'primary',
+        '<span>Done — ' + cfg.dm.people.length + ' people moved</span>' +
+        '<span class="why">these become your contacts for the lonely-at-11pm unit</span>');
+      fin.type = 'button';
+      fin.addEventListener('click', function () {
+        cfg.dm.done = true;
+        cfg.contacts = cfg.dm.people.slice(0, 3);
+        RB.store.saveConfig(cfg);
+        capture();
+      });
+      stage.appendChild(el('div', 'sp'));
+      stage.appendChild(fin);
+    }
+
+    var back = el('button', 'ghost', 'Later');
+    back.type = 'button';
+    back.addEventListener('click', capture);
+    stage.appendChild(back);
+  }
+
   /* ---------------- insights ---------------- */
   function insights() {
     clearTimer();
@@ -511,6 +600,11 @@ var RB = window.RB || {};
     stage.appendChild(c2);
 
     stage.appendChild(backupCard(ev.length));
+    var dmBtn = el('button', 'ghost',
+      RB.store.config().dm.done ? 'Redo the messages step' : 'Messages step (day 13)');
+    dmBtn.type = 'button';
+    dmBtn.addEventListener('click', dmStep);
+    stage.appendChild(dmBtn);
     tabs('data');
   }
 

@@ -2,47 +2,35 @@
    Output is a named read plus the per-lever weights that seed the predictor. */
 var RB = window.RB || {};
 
+/* Five forced-choice questions instead of eight rating ones.
+   Rating a single lever per question wastes a question on one hypothesis;
+   making the user CHOOSE between four levers discriminates four at a time,
+   so four questions carry more signal than eight did, in half the taps.
+   Ties break toward Flinch, per the asymmetric costs in the spec. */
 RB.QUESTIONS = [
-  { q:'It’s fifteen minutes before something you’ve been putting off. Where’s your phone?',
-    a:[['In my hand already',{flinch:3}],
-       ['I check it "one last time" first',{flinch:2,gap:1}],
-       ['Face down — that’s when I focus',{flinch:0}]] },
+  { q:'Think about the last few times you opened it. What had just happened?',
+    a:[['I’d finished something and hadn’t started the next thing', {gap:3}],
+       ['Nothing — there was just empty time',                      {void:3}],
+       ['I was about to start something I didn’t want to do',       {flinch:3}],
+       ['I’d been going hard and felt owed a break',                {payout:3}]] },
 
-  { q:'You’ve just closed the laptop after a long stretch of work. First instinct?',
-    a:[['Scroll. I’ve earned it',{payout:3}],
-       ['Get up, move around',{payout:0,gap:1}],
-       ['Straight into the next thing',{payout:0}]] },
+  { q:'And when it isn’t that — what’s underneath it?',
+    a:[['Restless, keyed up, can’t settle',   {buzz:3}],
+       ['Flat and tired, nothing left',       {crash:3}],
+       ['A bit alone, wanting people around', {ache:3}],
+       ['Genuinely nothing. I just do it',    {gap:2, void:1}]] },
 
-  { q:'Lights off, in bed, genuinely tired. What actually happens?',
-    a:[['Half an hour goes missing',{crash:3}],
-       ['A quick check, then sleep',{crash:1}],
-       ['Phone isn’t in the room',{crash:0}]] },
+  { q:'Which would be hardest to give up?',
+    a:[['Knowing what everyone’s up to',        {ache:3}],
+       ['Something to do when there’s nothing', {void:3}],
+       ['The way it switches my brain off',     {crash:2, buzz:1}],
+       ['The break after I’ve worked',          {payout:3}]] },
 
-  { q:'An empty hour. Nothing scheduled, nobody around.',
-    a:[['That’s my worst hour',{void:3}],
-       ['I’ll find something eventually',{void:1}],
-       ['I like empty hours',{void:0}]] },
-
-  { q:'How often do you find the phone already in your hand, without deciding to pick it up?',
-    a:[['Constantly — I don’t catch it happening',{gap:3}],
-       ['A few times a day',{gap:2}],
-       ['Rarely',{gap:0}]] },
-
-  { q:'When you open Instagram, what do you check first?',
-    a:[['Messages, always',{ache:3}],
-       ['Depends who’s posted',{ache:2,void:1}],
-       ['Straight to the feed',{ache:0,void:1}]] },
-
-  { q:'Chest tight, mind going too fast, can’t settle. Phone?',
-    a:[['Immediately — it’s the only thing that quiets it',{buzz:3}],
-       ['Sometimes',{buzz:1}],
-       ['No, that makes it worse',{buzz:0}]] },
-
-  { q:'Afterwards, the strongest feeling is:',
-    a:[['Relief',{flinch:2,buzz:1}],
-       ['Emptiness',{void:2,ache:1}],
-       ['Guilt about the time',{payout:1,gap:1}],
-       ['Nothing at all',{gap:2,crash:1}]] }
+  { q:'Worst time of day for it?',
+    a:[['In bed, before sleep',        {crash:3}],
+       ['Mid-task, all day long',      {gap:3}],
+       ['Right before something hard', {flinch:3}],
+       ['When I’m wound up',           {buzz:3}]] }
 ];
 
 RB.HEADLINES = {
