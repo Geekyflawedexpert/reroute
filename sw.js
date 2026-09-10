@@ -1,8 +1,8 @@
 /* Network-first for our own files, cache as the offline fallback.
    Cache-first would pin users to whatever build they installed first —
    with a fixed cache name they'd never receive an update again. */
-var CACHE = 'reroute-v2';
-var ASSETS = ['index.html','intake.html','styles.css','levers.js','prior.js','store.js','app.js','intake.js','manifest.json','icon.svg'];
+var CACHE = 'reroute-v3';
+var ASSETS = ['index.html','intake.html','setup.html','styles.css','levers.js','prior.js','store.js','app.js','intake.js','manifest.json','icon.svg'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(ASSETS); }).then(function () { return self.skipWaiting(); }));

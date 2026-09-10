@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Reroute — what kind of scroller are you?</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0F625A">
+<meta name="theme-color" content="#0A0A0A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -61,7 +61,7 @@
   function renderGoal() {
     prog.textContent = 'last one';
     stage.innerHTML = '';
-    stage.appendChild(el('h1', null, 'Where do you want to end up?'));
+    stage.appendChild(el('h1', null, 'Where do you want to <span class="hl">end up</span>?'));
     stage.appendChild(el('p', null,
       'This sets your daily budget. It’s a target, not a wall — you can always go past it, ' +
       'and you get two flexible days a week with no questions asked.'));
@@ -146,6 +146,11 @@
       location.href = 'index.html';
     });
     stage.appendChild(go);
+
+    var wire = el('a', 'ghost', 'Wire it to Instagram');
+    wire.href = 'setup.html';
+    wire.style.cssText = 'display:block;text-decoration:none;line-height:1.2';
+    stage.appendChild(wire);
 
     var again = el('button', 'ghost', 'Retake');
     again.type = 'button';

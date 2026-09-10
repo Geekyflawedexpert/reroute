@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reroute — wire it up</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <p class="eyebrow">Reroute · <b id="plat">setup</b></p>
+  <h1>Make Instagram <span class="hl">come here first</span></h1>
+  <p>Reroute can’t block anything, and it doesn’t try to. It just needs your phone to
+     send you here when you reach for Instagram — your phone’s own automation does that.</p>
+
+  <div class="card">
+    <p class="q">Your link</p>
+    <p style="color:var(--ink);word-break:break-all;margin:0 0 12px"><code id="url"></code></p>
+    <button class="alt" id="copy" type="button"><span>Copy link</span><span class="p">tap</span></button>
+  </div>
+
+  <div id="steps"></div>
+
+  <div class="card">
+    <p class="q">Before anything else</p>
+    <p><b style="color:var(--ink)">Add Reroute to your home screen</b>, and open it from that icon
+       rather than the browser. On iPhone that’s Share → Add to Home Screen.</p>
+    <p class="hint" style="margin:0">This isn’t cosmetic. Installed, the app runs standalone and your log
+       is exempt from Safari clearing storage for sites unused over a week — without it you can lose
+       three weeks of data.</p>
+  </div>
+
+  <div class="card">
+    <p class="q">What it won’t do</p>
+    <p class="hint" style="margin:0">It fires when Instagram is launched, but not reliably when you return
+       to it from the app switcher, and it’s bypassed if you open Instagram from a notification or a link.
+       That’s the ceiling of what any web app can do — real interception needs a native build.</p>
+  </div>
+
+  <div class="sp"></div>
+  <a class="ghost" href="index.html" style="display:block;text-decoration:none;line-height:1.2">Back to Reroute</a>
+</div>
+
+<script>
+(function () {
+  var base = location.href.replace(/setup\.html.*$/, '') + 'index.html';
+  document.getElementById('url').textContent = base;
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var b = this;
+    if (navigator.clipboard) navigator.clipboard.writeText(base).catch(function(){});
+    b.innerHTML = '<span>Copied</span>';
+  });
+
+  var ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var android = /Android/i.test(navigator.userAgent);
+  document.getElementById('plat').textContent = ios ? 'iphone' : android ? 'android' : 'setup';
+
+  var iosSteps =
+    '<p class="q">iPhone · Shortcuts</p>' +
+    '<ol class="steps">' +
+      '<li>Open <b>Shortcuts</b> → <b>Automation</b> tab → <b>+</b></li>' +
+      '<li>Choose <b>App</b>, pick <b>Instagram</b>, select <b>Is Opened</b></li>' +
+      '<li>Choose <b>Run Immediately</b>, and turn <b>Notify When Run</b> off</li>' +
+      '<li>Add the action <b>Open URLs</b> and paste the link above</li>' +
+      '<li>Tap <b>Done</b>. Open Instagram to test — you should land here.</li>' +
+    '</ol>' +
+    '<p class="hint">If it asks before running every time, reopen the automation and switch it to ' +
+    'Run Immediately — that setting is what makes it usable.</p>';
+
+  var androidSteps =
+    '<p class="q">Android</p>' +
+    '<ol class="steps">' +
+      '<li>Install <b>Tasker</b> (or MacroDroid, which is free)</li>' +
+      '<li>New profile → <b>Application</b> → pick <b>Instagram</b></li>' +
+      '<li>Add task → <b>Net</b> → <b>Browse URL</b>, paste the link above</li>' +
+      '<li>Exempt the automation app from battery optimisation, or the OEM will kill it silently</li>' +
+    '</ol>' +
+    '<p class="hint">On Xiaomi, Oppo, Vivo and Realme this last step is not optional — their battery ' +
+    'managers stop background automation without any warning.</p>';
+
+  var d = document.createElement('div');
+  d.className = 'card';
+  d.innerHTML = ios ? iosSteps : android ? androidSteps : (iosSteps + '<div style="height:20px"></div>' + androidSteps);
+  document.getElementById('steps').appendChild(d);
+})();
+</script>
+</body>
+</html>

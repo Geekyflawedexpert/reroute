@@ -423,7 +423,7 @@ var RB = window.RB || {};
     clearTimer();
     eyebrow.innerHTML = 'Reroute · <b>one question</b>';
     stage.innerHTML = '';
-    stage.appendChild(el('h1', null, 'Still want to open it?'));
+    stage.appendChild(el('h1', null, 'Still want to <span class="hl">open it</span>?'));
 
     var no = el('button', 'primary', '<span>No — that did it</span>');
     no.type = 'button';
@@ -446,7 +446,7 @@ var RB = window.RB || {};
     var n = RB.store.events().length;
     if (n % 10 !== 0) return capture();
     stage.innerHTML = '';
-    stage.appendChild(el('h1', null, 'One line, if you want'));
+    stage.appendChild(el('h1', null, 'One line, <span class="hl">if you want</span>'));
     stage.appendChild(el('p', null, 'What was actually going on just then? Skip it freely — this is optional.'));
     var ta = el('textarea'); ta.rows = 3;
     stage.appendChild(ta);
@@ -468,7 +468,7 @@ var RB = window.RB || {};
     var cfg = RB.store.config();
     eyebrow.innerHTML = 'Reroute · <b>day 13 · messages</b>';
     stage.innerHTML = '';
-    stage.appendChild(el('h1', null, 'Who actually messages you there?'));
+    stage.appendChild(el('h1', null, 'Who <span class="hl">actually</span> messages you there?'));
     stage.appendChild(el('p', null,
       'Not followers — the people whose messages you’d genuinely miss. Three to eight names.'));
 
@@ -548,7 +548,7 @@ var RB = window.RB || {};
     var ev = RB.store.events();
     eyebrow.innerHTML = 'Reroute · <b>' + ev.length + ' logged</b>';
     stage.innerHTML = '';
-    stage.appendChild(el('h1', null, 'What the log says'));
+    stage.appendChild(el('h1', null, 'What the <span class="hl">log</span> says'));
 
     if (!ev.length) {
       stage.appendChild(el('p', null, 'Nothing yet. The first numbers appear after a day of use.'));
@@ -605,6 +605,10 @@ var RB = window.RB || {};
     dmBtn.type = 'button';
     dmBtn.addEventListener('click', dmStep);
     stage.appendChild(dmBtn);
+    var setupLink = el('a', 'ghost', 'Wire it to Instagram');
+    setupLink.href = 'setup.html';
+    setupLink.style.cssText = 'display:block;text-decoration:none;line-height:1.2';
+    stage.appendChild(setupLink);
     tabs('data');
   }
 

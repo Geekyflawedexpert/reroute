@@ -34,13 +34,13 @@ RB.QUESTIONS = [
 ];
 
 RB.HEADLINES = {
-  flinch:'You scroll to postpone.',
-  void:  'You scroll to fill.',
-  buzz:  'You scroll to come down.',
-  crash: 'You scroll to switch off.',
-  gap:   'You scroll on autopilot.',
-  ache:  'You scroll to be near people.',
-  payout:'You scroll as payment.'
+  flinch:'You scroll to <span class="hl">postpone</span>.',
+  void:  'You scroll to <span class="hl">fill</span>.',
+  buzz:  'You scroll to <span class="hl">come down</span>.',
+  crash: 'You scroll to <span class="hl">switch off</span>.',
+  gap:   'You scroll on <span class="hl">autopilot</span>.',
+  ache:  'You scroll to <span class="hl">be near people</span>.',
+  payout:'You scroll as <span class="hl">payment</span>.'
 };
 
 RB.READS = {
