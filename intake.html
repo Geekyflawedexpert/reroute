@@ -69,8 +69,8 @@
     var wrap = el('div', 'stack');
     RB.GOALS.forEach(function (g) {
       var b = el('button', 'alt',
-        '<span><strong style="color:var(--ink)">' + g.label + '</strong><br>' +
-        '<span class="hint">' + g.sub + '</span></span>');
+        '<span class="row-item"><span class="t">' + g.label + '</span>' +
+        '<span class="d">' + g.sub + '</span></span>');
       b.type = 'button';
       b.addEventListener('click', function () { g.asksMinutes ? askMinutes(g) : commitGoal(g, g.mins); });
       wrap.appendChild(b);
@@ -112,18 +112,20 @@
 
     var c = el('div', 'card');
     c.appendChild(el('p', 'q', 'Your two levers'));
-    c.appendChild(el('p', null,
-      '<strong style="color:var(--ink)">' + pri.label + '</strong> — ' + pri.sub +
-      '<br><strong style="color:var(--ink)">' + sec.label + '</strong> — ' + sec.sub));
+    var lv = el('div', 'rows');
+    lv.appendChild(el('div', 'row-item', '<span class="t">' + pri.label + '</span><span class="d">' + pri.sub + '</span>'));
+    lv.appendChild(el('div', 'row-item', '<span class="t">' + sec.label + '</span><span class="d">' + sec.sub + '</span>'));
+    c.appendChild(lv);
     stage.appendChild(c);
 
     var units = (RB.UNITS[r.primary] || []).slice(0, 3);
     var u = el('div', 'card');
     u.appendChild(el('p', 'q', 'What you’ll be offered instead'));
-    var list = el('div', 'bars');
+    var list = el('div', 'rows');
     units.forEach(function (x) {
-      list.appendChild(el('p', null, '<strong style="color:var(--ink)">' + x.title + '</strong>' +
-        (x.note ? '<br><span class="hint">' + x.note + '</span>' : '')));
+      list.appendChild(el('div', 'row-item',
+        '<span class="t">' + x.title + '</span>' +
+        '<span class="d">' + (x.note || '') + '</span>'));
     });
     u.appendChild(list);
     stage.appendChild(u);
@@ -149,7 +151,6 @@
 
     var wire = el('a', 'ghost', 'Wire it to Instagram');
     wire.href = 'setup.html';
-    wire.style.cssText = 'display:block;text-decoration:none;line-height:1.2';
     stage.appendChild(wire);
 
     var again = el('button', 'ghost', 'Retake');

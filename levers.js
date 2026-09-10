@@ -19,29 +19,29 @@ RB.lever = function (id) { return RB.LEVERS[RB.IDX[id]]; };
    Nothing here needs a licence or a network call we can't make offline. */
 RB.UNITS = {
   void: [
-    { id:'wiki',      type:'wiki',   title:'One random article',   note:'Read it or don’t. Then it’s over.' },
-    { id:'drill-v',   type:'drill',  title:'One drill',            note:'Right or wrong in five seconds.' },
+    { id:'wiki',      type:'wiki',   title:'One random article',   note:'Read it or don’t. Either way it’s one article.' },
+    { id:'drill-v',   type:'drill',  title:'One drill',            note:'One question. Right or wrong in five seconds.' },
     { id:'song-v',    type:'timebox',title:'One song, standing up',mins:4, note:'Loud. On your feet.' },
-    { id:'curio',     type:'list',   title:'Something off your list', listKey:'curiosity' }
+    { id:'curio',     type:'list',   title:'Something off your list', listKey:'curiosity', note:'Written by you, back when you weren’t craving.' }
   ],
   flinch: [
-    { id:'decompose', type:'step',   title:'Name it, then shrink it' }
+    { id:'decompose', type:'step',   title:'Name it, then shrink it', note:'Name the thing you’re dodging, then start the two-minute version.' }
   ],
   buzz: [
-    { id:'sigh',      type:'breath', title:'Physiological sigh',   cycles:6 },
+    { id:'sigh',      type:'breath', title:'Physiological sigh',   cycles:6, note:'Two in through the nose, one long out. Six rounds.' },
     { id:'cold',      type:'move',   title:'Cold water on your face', mins:1, note:'Thirty seconds. Then come back.' },
-    { id:'dump',      type:'text',   title:'Put the worry on paper', prompt:'What’s actually circling?' }
+    { id:'dump',      type:'text',   title:'Put the worry on paper', prompt:'What’s actually circling?', note:'Naming it takes the edge off. No one reads this.' }
   ],
   crash: [
     { id:'album',     type:'timebox',title:'One album side',       mins:20, note:'Lie down. This is allowed.' },
     { id:'pod',       type:'timebox',title:'Podcast, sleep timer', mins:15, note:'Timer set before you start.' }
   ],
   gap: [
-    { id:'stand',     type:'move',   title:'Stand up, refill water', mins:2, note:'Phone stays here.' },
+    { id:'stand',     type:'move',   title:'Stand up, refill water', mins:2, note:'Two minutes. The phone stays where it is.' },
     { id:'window',    type:'move',   title:'Look out a window',      mins:1, note:'Middle distance. That’s it.' }
   ],
   ache: [
-    { id:'voice',     type:'voice',  title:'Send one voice note' }
+    { id:'voice',     type:'voice',  title:'Send one voice note', note:'Thirty seconds of your actual voice, to one real person.' }
   ],
   /* Payout dispenses a bounded OBJECT, not a duration. "One episode" ends by
      itself; twenty minutes of a feed never does. Structure beats a notification

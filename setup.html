@@ -20,7 +20,7 @@
 
   <div class="card">
     <p class="q">Your link</p>
-    <p style="color:var(--ink);word-break:break-all;margin:0 0 12px"><code id="url"></code></p>
+    <div class="url" id="url"></div>
     <button class="alt" id="copy" type="button"><span>Copy link</span><span class="p">tap</span></button>
   </div>
 
@@ -28,22 +28,23 @@
 
   <div class="card">
     <p class="q">Before anything else</p>
-    <p><b style="color:var(--ink)">Add Reroute to your home screen</b>, and open it from that icon
-       rather than the browser. On iPhone that’s Share → Add to Home Screen.</p>
-    <p class="hint" style="margin:0">This isn’t cosmetic. Installed, the app runs standalone and your log
-       is exempt from Safari clearing storage for sites unused over a week — without it you can lose
-       three weeks of data.</p>
+    <div class="row-item">
+      <span class="t">Add Reroute to your home screen</span>
+      <span class="d">Share → Add to Home Screen, then open it from that icon rather than the browser.</span>
+    </div>
+    <p class="hint">Not cosmetic. Installed, it runs standalone and your log is exempt from Safari
+       clearing storage for sites unused over a week — without it you can lose three weeks of data.</p>
   </div>
 
   <div class="card">
     <p class="q">What it won’t do</p>
-    <p class="hint" style="margin:0">It fires when Instagram is launched, but not reliably when you return
+    <p class="hint">It fires when Instagram is launched, but not reliably when you return
        to it from the app switcher, and it’s bypassed if you open Instagram from a notification or a link.
        That’s the ceiling of what any web app can do — real interception needs a native build.</p>
   </div>
 
   <div class="sp"></div>
-  <a class="ghost" href="index.html" style="display:block;text-decoration:none;line-height:1.2">Back to Reroute</a>
+  <a class="ghost" href="index.html">Back to Reroute</a>
 </div>
 
 <script>
@@ -71,7 +72,7 @@
       '<li>Add the action <b>Open URLs</b> and paste the link above</li>' +
       '<li>Tap <b>Done</b>. Open Instagram to test — you should land here.</li>' +
     '</ol>' +
-    '<p class="hint">If it asks before running every time, reopen the automation and switch it to ' +
+    '<p class="hint" style="margin-top:16px">If it asks before running every time, reopen the automation and switch it to ' +
     'Run Immediately — that setting is what makes it usable.</p>';
 
   var androidSteps =
@@ -82,7 +83,7 @@
       '<li>Add task → <b>Net</b> → <b>Browse URL</b>, paste the link above</li>' +
       '<li>Exempt the automation app from battery optimisation, or the OEM will kill it silently</li>' +
     '</ol>' +
-    '<p class="hint">On Xiaomi, Oppo, Vivo and Realme this last step is not optional — their battery ' +
+    '<p class="hint" style="margin-top:16px">On Xiaomi, Oppo, Vivo and Realme this last step is not optional — their battery ' +
     'managers stop background automation without any warning.</p>';
 
   var d = document.createElement('div');

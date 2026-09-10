@@ -552,6 +552,7 @@ var RB = window.RB || {};
 
     if (!ev.length) {
       stage.appendChild(el('p', null, 'Nothing yet. The first numbers appear after a day of use.'));
+      stage.appendChild(el('div', 'sp'));
       return tabs('data');
     }
 
@@ -607,8 +608,8 @@ var RB = window.RB || {};
     stage.appendChild(dmBtn);
     var setupLink = el('a', 'ghost', 'Wire it to Instagram');
     setupLink.href = 'setup.html';
-    setupLink.style.cssText = 'display:block;text-decoration:none;line-height:1.2';
     stage.appendChild(setupLink);
+    stage.appendChild(el('div', 'sp'));
     tabs('data');
   }
 
