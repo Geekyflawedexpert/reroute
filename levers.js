@@ -41,7 +41,8 @@ RB.UNITS = {
     { id:'window',    type:'move',   title:'Look out a window',      mins:1, note:'Middle distance. That’s it.' }
   ],
   ache: [
-    { id:'voice',     type:'voice',  title:'Send one voice note', note:'Thirty seconds of your actual voice, to one real person.' }
+    { id:'chat',  type:'chat',  title:'Talk it out for a minute', note:'Something to answer at 3am, when messaging a person feels like too much.' },
+    { id:'voice', type:'voice', title:'Send one voice note',      note:'Thirty seconds of your actual voice, to one real person.' }
   ],
   /* Payout dispenses a bounded OBJECT, not a duration. "One episode" ends by
      itself; twenty minutes of a feed never does. Structure beats a notification

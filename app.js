@@ -323,7 +323,7 @@ var RB = window.RB || {};
   function dispense(leverId, u, corr) {
     eyebrow.innerHTML = 'Reroute · <b>one ' + (u.type === 'step' ? 'step' : 'thing') + ', then it ends</b>';
     ({ wiki: uWiki, drill: uDrill, breath: uBreath, timebox: uTimebox, artifact: uArtifact,
-       move: uMove, text: uText, step: uStep, voice: uVoice, list: uList
+       move: uMove, text: uText, step: uStep, voice: uVoice, list: uList, chat: uChat
      }[u.type] || uText)(u, leverId, corr);
   }
 
@@ -541,6 +541,81 @@ var RB = window.RB || {};
     bail.type = 'button';
     bail.addEventListener('click', openTarget);
     stage.appendChild(bail);
+  }
+
+  /* Scripted, tap-to-reply, and it always ends by handing you somewhere real.
+     Deliberately short — this is a bridge across ninety seconds, not a friend. */
+  function uChat(u) {
+    clearTimer();
+    eyebrow.innerHTML = 'Reroute · <b>' + RB.CHAT_OPENER + '</b>';
+    stage.innerHTML = '';
+    var log = el('div', 'chat');
+    stage.appendChild(log);
+    var choices = el('div', 'stack');
+    stage.appendChild(choices);
+    var trail = [];
+
+    function said(text, who) {
+      var b = el('div', 'bub ' + who, text);
+      log.appendChild(b);
+      b.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    }
+
+    function node(key) {
+      var n = RB.CHAT[key];
+      if (!n) return;
+      trail.push(key);
+      choices.innerHTML = '';
+      n.say.forEach(function (line, i) {
+        setTimeout(function () { said(line, 'them'); }, i * 550);
+      });
+      setTimeout(function () {
+        if (n.opts) {
+          n.opts.forEach(function (o) {
+            var b = el('button', 'alt', '<span>' + o[0] + '</span>');
+            b.type = 'button';
+            b.addEventListener('click', function () {
+              said(o[0], 'me');
+              choices.innerHTML = '';
+              setTimeout(function () { node(o[1]); }, 420);
+            });
+            choices.appendChild(b);
+          });
+        } else if (n.end) {
+          finish(n.end);
+        }
+      }, n.say.length * 550 + 150);
+    }
+
+    function finish(endKey) {
+      RB.store.update(current.id, { chatPath: trail.join('>'), chatEnd: endKey });
+      var e = RB.CHAT_ENDS[endKey] || RB.CHAT_ENDS.rest;
+      var go = el('button', 'primary', '<span>' + e.label + '</span>');
+      go.type = 'button';
+      go.addEventListener('click', function () {
+        if (e.kind === 'contact')      return uVoice(RB.UNITS.ache[1]);
+        if (e.kind === 'flinch')       return dispense('flinch', RB.UNITS.flinch[0]);
+        if (e.kind === 'write')        return uText({ title: 'One line', prompt: 'Just get it out of your head.' });
+        if (e.kind === 'redraw') {
+          var bank = RB.UNITS.void;
+          return dispense('void', bank[Math.floor(Math.random() * bank.length)]);
+        }
+        outcome();
+      });
+      choices.appendChild(go);
+
+      var done2 = el('button', 'ghost', 'That’s enough, close it');
+      done2.type = 'button';
+      done2.addEventListener('click', outcome);
+      choices.appendChild(done2);
+
+      var bail = el('button', 'ghost warnish', 'Open it anyway');
+      bail.type = 'button';
+      bail.addEventListener('click', function () { handoff(RB.contextNow(), 'ache'); });
+      choices.appendChild(bail);
+    }
+
+    node('start');
   }
 
   function uVoice(u) {

@@ -157,6 +157,19 @@ input[type=text]:focus,textarea:focus{outline:none;border-color:var(--accent)}
 }
 @media (prefers-reduced-motion:reduce){.breath{transition:none}}
 
+/* ---------- chat ---------- */
+.chat{display:flex;flex-direction:column;gap:var(--s2);margin:0 0 var(--s5)}
+.bub{
+  max-width:82%;padding:12px var(--s4);border-radius:var(--r-card);
+  font-size:var(--t-body);line-height:1.45;font-weight:500;
+}
+.bub.them{background:var(--surface);border:1px solid var(--rule);color:var(--ink);align-self:flex-start;border-bottom-left-radius:6px}
+.bub.me{background:var(--accent-dim);border:1px solid transparent;color:var(--accent-ink);align-self:flex-end;border-bottom-right-radius:6px}
+@media (prefers-reduced-motion:no-preference){
+  .bub{animation:rise .22s ease-out}
+  @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+}
+
 /* ---------- data ---------- */
 .stat{display:flex;gap:var(--s6);flex-wrap:wrap;margin:0 0 var(--s2)}
 .stat div{display:flex;flex-direction:column;gap:2px}
