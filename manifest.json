@@ -1,0 +1,9 @@
+{
+  "name": "Reroute",
+  "short_name": "Reroute",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#F5F8F8",
+  "theme_color": "#0F625A",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reroute — what kind of scroller are you?</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F625A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <p class="eyebrow">Reroute · <b id="prog">question 1 of 8</b></p>
+  <div id="stage"></div>
+</div>
+
+<script src="levers.js"></script>
+<script src="prior.js"></script>
+<script src="store.js"></script>
+<script src="intake.js"></script>
+<script>
+(function () {
+  var stage = document.getElementById('stage'), prog = document.getElementById('prog');
+  var answers = [], qi = 0;
+
+  function el(tag, cls, html) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (html != null) n.innerHTML = html;
+    return n;
+  }
+
+  function renderQuestion() {
+    prog.textContent = 'question ' + (qi + 1) + ' of ' + RB.QUESTIONS.length;
+    stage.innerHTML = '';
+    var Q = RB.QUESTIONS[qi];
+    stage.appendChild(el('h1', null, Q.q));
+    var wrap = el('div', 'stack');
+    Q.a.forEach(function (opt, i) {
+      var b = el('button', 'alt', '<span>' + opt[0] + '</span>');
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        answers[qi] = i;
+        qi++;
+        qi < RB.QUESTIONS.length ? renderQuestion() : renderResult();
+      });
+      wrap.appendChild(b);
+    });
+    stage.appendChild(wrap);
+    if (qi > 0) {
+      var back = el('button', 'ghost', 'Back');
+      back.type = 'button';
+      back.addEventListener('click', function () { qi--; renderQuestion(); });
+      stage.appendChild(back);
+    }
+  }
+
+  function renderResult() {
+    var r = RB.score(answers);
+    RB.store.saveIntake(r);
+    prog.textContent = 'your read';
+
+    var pri = RB.lever(r.primary), sec = RB.lever(r.secondary);
+    stage.innerHTML = '';
+    stage.appendChild(el('h1', null, RB.HEADLINES[r.primary]));
+    stage.appendChild(el('p', 'lead', RB.READS[r.primary]));
+
+    var c = el('div', 'card');
+    c.appendChild(el('p', 'q', 'Your two levers'));
+    c.appendChild(el('p', null,
+      '<strong style="color:var(--ink)">' + pri.label + '</strong> — ' + pri.sub +
+      '<br><strong style="color:var(--ink)">' + sec.label + '</strong> — ' + sec.sub));
+    stage.appendChild(c);
+
+    var units = (RB.UNITS[r.primary] || []).slice(0, 3);
+    var u = el('div', 'card');
+    u.appendChild(el('p', 'q', 'What you’ll be offered instead'));
+    var list = el('div', 'bars');
+    units.forEach(function (x) {
+      list.appendChild(el('p', null, '<strong style="color:var(--ink)">' + x.title + '</strong>' +
+        (x.note ? '<br><span class="hint">' + x.note + '</span>' : '')));
+    });
+    u.appendChild(list);
+    stage.appendChild(u);
+
+    stage.appendChild(el('p', null,
+      'Week one changes nothing else. Nothing gets blocked, nothing gets deleted, and every open is still allowed. ' +
+      'You’ll get a number on day one and your own pattern by day three.'));
+
+    var go = el('button', 'primary',
+      '<span>Start day 1</span><span class="why">21 days · nothing blocked this week</span>');
+    go.type = 'button';
+    go.addEventListener('click', function () {
+      var cfg = RB.store.config();
+      if (!cfg.start) { cfg.start = Date.now(); RB.store.saveConfig(cfg); }
+      location.href = 'index.html';
+    });
+    stage.appendChild(go);
+
+    var again = el('button', 'ghost', 'Retake');
+    again.type = 'button';
+    again.addEventListener('click', function () { answers = []; qi = 0; renderQuestion(); });
+    stage.appendChild(again);
+  }
+
+  renderQuestion();
+})();
+</script>
+</body>
+</html>

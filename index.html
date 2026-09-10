@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reroute</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F625A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <p class="eyebrow" id="eyebrow">Reroute</p>
+  <div id="stage"></div>
+</div>
+<script src="levers.js"></script>
+<script src="prior.js"></script>
+<script src="store.js"></script>
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+</script>
+</body>
+</html>
