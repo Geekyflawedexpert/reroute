@@ -25,6 +25,7 @@ RB.store = (function () {
       if (!c.flex)             c.flex = { weekStart: null, used: 0 };
       if (!c.dm)               c.dm = { done: false, people: [], sent: [] };
       if (!c.target)           c.target = 'web';   // 'web' | 'app' — web is the worse feed, on purpose
+      if (!c.lock)             c.lock = { shortcut: 'Reroute Lock', auto: false, firedOn: null };
       return c;
     },
 
@@ -171,6 +172,18 @@ RB.store = (function () {
     graceLeft: function () {
       var c = api.config();
       return c.graceUntil ? Math.max(0, c.graceUntil - Date.now()) : 0;
+    },
+
+    /* ---- the Focus handoff ----
+       A web page can't touch Screen Time, but it can run a Shortcut, and a
+       Shortcut can set a Focus that hides the app from the Home Screen. */
+    lockFiredToday: function () {
+      return api.config().lock.firedOn === new Date().toDateString();
+    },
+    markLockFired: function () {
+      var c = api.config();
+      c.lock.firedOn = new Date().toDateString();
+      api.saveConfig(c);
     },
 
     lastEventTs: function () {

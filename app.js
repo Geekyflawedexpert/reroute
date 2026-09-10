@@ -145,6 +145,10 @@ var RB = window.RB || {};
 
     stage.appendChild(el('div', 'sp'));
     var outOfBudget = budg > 0 && spent >= budg;
+    var lockCfg2 = RB.store.config().lock;
+    if (outOfBudget && lockCfg2.auto && lockCfg2.shortcut && !RB.store.lockFiredToday()) {
+      if (fireLock()) return;      // fires once a day, not on every load
+    }
     var skip = el('button', 'ghost warnish',
       outOfBudget ? 'Open it anyway — you’re at ' + spent + ' of ' + budg : 'Just open it');
     skip.type = 'button';
@@ -183,6 +187,17 @@ var RB = window.RB || {};
     return { ok: score >= 3, score: score, why: why };
   }
 
+  /* Runs a Shortcut by name. This is the only lever a web page has on the OS:
+     it can't set a Screen Time limit, but the Shortcut it starts can set a
+     Focus whose Home Screen simply doesn't contain Instagram. */
+  function fireLock() {
+    var name = (RB.store.config().lock.shortcut || '').trim();
+    if (!name) return false;
+    RB.store.markLockFired();
+    location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(name);
+    return true;
+  }
+
   /* ---- the handoff ----
      Going through is a decision with a stated length, made before you leave,
      not a door you drift out of. Reroute can hold you to the next session;
@@ -219,10 +234,25 @@ var RB = window.RB || {};
         'limit is for. This is a commitment, not a wall.'));
 
       stage.appendChild(el('div', 'sp'));
-      var back = el('button', 'primary', '<span>Fine, back</span>');
-      back.type = 'button';
-      back.addEventListener('click', capture);
-      stage.appendChild(back);
+
+      var lockCfg = RB.store.config().lock;
+      if (lockCfg.shortcut) {
+        var lock = el('button', 'primary',
+          '<span>Put it out of reach</span><span class="why">runs “' + lockCfg.shortcut + '” · hides the app</span>');
+        lock.type = 'button';
+        lock.addEventListener('click', fireLock);
+        stage.appendChild(lock);
+
+        var back2 = el('button', 'ghost', 'Not now');
+        back2.type = 'button';
+        back2.addEventListener('click', capture);
+        stage.appendChild(back2);
+      } else {
+        var back = el('button', 'primary', '<span>Fine, back</span>');
+        back.type = 'button';
+        back.addEventListener('click', capture);
+        stage.appendChild(back);
+      }
       return;
     }
 
@@ -741,6 +771,35 @@ var RB = window.RB || {};
       insights();
     });
     stage.appendChild(toggle);
+
+    var lc = RB.store.config().lock;
+    var lockCard = el('div', 'card');
+    lockCard.appendChild(el('p', 'q', 'Focus lock'));
+    lockCard.appendChild(el('p', 'hint',
+      'Reroute can’t set a Screen Time limit — no website can. It can run a Shortcut, ' +
+      'and that Shortcut can switch on a Focus whose Home Screen has no Instagram on it.'));
+    var nameIn = el('input'); nameIn.type = 'text';
+    nameIn.placeholder = 'Shortcut name'; nameIn.value = lc.shortcut || '';
+    nameIn.addEventListener('change', function () {
+      var c = RB.store.config(); c.lock.shortcut = nameIn.value.trim(); RB.store.saveConfig(c);
+    });
+    lockCard.appendChild(nameIn);
+    var autoBtn = el('button', 'alt',
+      '<span class="row-item"><span class="t">' + (lc.auto ? 'Runs automatically' : 'Only when I tap it') + '</span>' +
+      '<span class="d">' + (lc.auto
+        ? 'Fires once, the first time you run out for the day.'
+        : 'Offered on the out-of-budget screen, never forced.') + '</span></span>' +
+      '<span class="p">' + (lc.auto ? 'auto' : 'manual') + '</span>');
+    autoBtn.type = 'button';
+    autoBtn.addEventListener('click', function () {
+      var c = RB.store.config(); c.lock.auto = !c.lock.auto; RB.store.saveConfig(c); insights();
+    });
+    lockCard.appendChild(autoBtn);
+    var testBtn = el('button', 'ghost', 'Test it now');
+    testBtn.type = 'button';
+    testBtn.addEventListener('click', fireLock);
+    lockCard.appendChild(testBtn);
+    stage.appendChild(lockCard);
     stage.appendChild(el('div', 'sp'));
     tabs('data');
   }
