@@ -13,7 +13,14 @@ var RB = window.RB || {};
   function mmss(s) { return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 
   function openTarget() {
-    if (current) RB.store.update(current.id, { outcome: 'opened', endedAt: Date.now() });
+    if (current) {
+      RB.store.update(current.id, { outcome: 'opened', endedAt: Date.now() });
+      // Start a tracked session so the time actually spent in Instagram counts
+      // against today's budget. The automation firing again is what closes it:
+      // the next time Reroute loads, reconcileSession() measures the gap.
+      var left = Math.max(1, RB.store.budgetToday() - RB.store.minutesToday());
+      RB.store.startSession(current.id, left);
+    }
     location.href = 'instagram://app';
     setTimeout(function () { location.href = 'https://www.instagram.com/'; }, 700);
   }
@@ -62,6 +69,25 @@ var RB = window.RB || {};
       nudge.appendChild(openDM);
       stage.appendChild(nudge);
     }
+    var budg = RB.store.budgetToday(), spent = RB.store.minutesToday();
+    if (budg > 0) {
+      var pct = Math.min(100, Math.round(spent / budg * 100));
+      var over = spent > budg;
+      var meter = el('div');
+      meter.style.cssText = 'margin:0 0 var(--s5)';
+      meter.innerHTML =
+        '<div class="bar" style="grid-template-columns:1fr auto;gap:var(--s2);margin-bottom:6px">' +
+          '<span class="t" style="color:' + (over ? 'var(--warn)' : 'var(--muted)') + '">' +
+            (over ? spent + ' min today — ' + (spent - budg) + ' over your ' + budg
+                  : spent + ' of ' + budg + ' min today') +
+            (RB.store.flexActive() ? ' · flexible day' : '') +
+          '</span>' +
+          '<span class="n">' + pct + '%</span>' +
+        '</div>' +
+        '<span class="track"><span class="fill" style="width:' + pct + '%;' +
+          (over ? 'background:var(--warn)' : '') + '"></span></span>';
+      stage.appendChild(meter);
+    }
     stage.appendChild(el('h1', null, 'What’s going on?'));
 
     var top = pred.ranked[0], L = RB.lever(top.id);
@@ -98,7 +124,9 @@ var RB = window.RB || {};
     stage.appendChild(rest);
 
     stage.appendChild(el('div', 'sp'));
-    var skip = el('button', 'ghost warnish', 'Just open it');
+    var outOfBudget = budg > 0 && spent >= budg;
+    var skip = el('button', 'ghost warnish',
+      outOfBudget ? 'Open it anyway — you’re at ' + spent + ' of ' + budg : 'Just open it');
     skip.type = 'button';
     skip.addEventListener('click', function () {
       current = RB.store.add({ ts: Date.now(), hour: ctx.hour, dow: ctx.dow, ctx: ctx,
