@@ -3,7 +3,7 @@
   "short_name": "Reroute",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#0A0A0A",
-  "theme_color": "#0A0A0A",
+  "background_color": "#0E0F10",
+  "theme_color": "#0E0F10",
   "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

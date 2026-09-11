@@ -73,7 +73,7 @@ var RB = window.RB || {};
       }
       stage.appendChild(el('div', 'card',
         '<p class="q">Last break</p>' +
-        '<p style="color:var(--ink);margin:0">' + body + '</p>' +
+        '<p style="color:var(--paper);margin:0">' + body + '</p>' +
         '<p class="hint" style="margin:6px 0 0">' + tail + '</p>'));
     }
     var cfgDM = RB.store.config().dm, dayNow = RB.store.day();
@@ -97,7 +97,7 @@ var RB = window.RB || {};
       meter.style.cssText = 'margin:0 0 var(--s5)';
       meter.innerHTML =
         '<div class="bar" style="grid-template-columns:1fr auto;gap:var(--s2);margin-bottom:6px">' +
-          '<span class="t" style="color:' + (over ? 'var(--warn)' : 'var(--muted)') + '">' +
+          '<span class="t" style="color:' + (over ? 'var(--signal)' : 'var(--muted)') + '">' +
             (over ? spent + ' min today — ' + (spent - budg) + ' over your ' + budg
                   : spent + ' of ' + budg + ' min today') +
             (RB.store.flexActive() ? ' · flexible day' : '') +
@@ -105,7 +105,7 @@ var RB = window.RB || {};
           '<span class="n">' + pct + '%</span>' +
         '</div>' +
         '<span class="track"><span class="fill" style="width:' + pct + '%;' +
-          (over ? 'background:var(--warn)' : '') + '"></span></span>';
+          (over ? 'background:var(--signal)' : '') + '"></span></span>';
       stage.appendChild(meter);
     }
     stage.appendChild(el('h1', null, 'What’s going on?'));
@@ -448,7 +448,7 @@ var RB = window.RB || {};
     stage.appendChild(box);
     // screened: re-draws past disasters, disease and violence before showing anything
     RB.fetchArticle().then(function (d) {
-      box.innerHTML = '<h2>' + d.title + '</h2><p style="color:var(--ink)">' + d.extract + '</p>';
+      box.innerHTML = '<h2>' + d.title + '</h2><p style="color:var(--paper)">' + d.extract + '</p>';
     });
     done('Finished');
   }
@@ -1009,7 +1009,7 @@ var RB = window.RB || {};
           imp.innerHTML = '<span>Restored — ' + total + ' events</span>';
           setTimeout(insights, 900);
         } catch (e) {
-          imp.innerHTML = '<span style="color:var(--warn)">That file isn’t a Reroute backup</span>';
+          imp.innerHTML = '<span style="color:var(--signal)">That file isn’t a Reroute backup</span>';
         }
       };
       r.readAsText(f);
